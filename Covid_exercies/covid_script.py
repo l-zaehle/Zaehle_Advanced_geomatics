@@ -10,12 +10,12 @@ provincesName = "ne_10m_admin_1_states_provinces"
 HMap.remove_layers_by_name(["OpenStreetMap", provincesName, "regions"])
 
 
-provincesLayer = HVectorLayer.open(geopackagePath, provincesName)
-
-# load open street m titels layer
+# load open street map
 osm = HMap.get_osm_layer()
 HMap.add_layer(osm)
 
+# load the province layer and create a subset with filter
+provincesLayer = HVectorLayer.open(geopackagePath, provincesName)
 HMap.add_layer(provincesLayer)
 
 provincesLayer.subset_filter("admin = 'Italy'") #just show those features that are obeying to th filter
@@ -25,15 +25,18 @@ regionIndex = provincesLayer.field_index("region")
 provinceIndex = provincesLayer.field_index("name")
 
 regionsFeatures = provincesLayer.features()
-regions = []
-regionsDict = {}
 
+#create a list with all the regions of italy
+regions = []
 for feature in regionsFeatures:
     region = feature.attributes[regionIndex]
     if region not in regions:
         regions.append(region)
 
-
+#create a dictionary with the region as key and geometries as values
+#Loop over the regions-list and check, if region is not yet in the dict, In this case a key (regionName) is set and the values are an empty list
+#then all geometries for each key are being added to the values-list
+regionsDict = {}
 for item in regions:
     for feature in regionsFeatures:
         region = feature.attributes[regionIndex]
@@ -42,8 +45,8 @@ for item in regions:
         if item == region:
             regionsDict[region].append(feature.geometry)
 
-print(regionsDict)
-"""
+
+# creation of the regionsLayer
 fields = {
     "name": "String"
 }
@@ -53,12 +56,13 @@ regionsLayer = HVectorLayer.new("regions", "Polygon", "EPSG:4326", fields)
 for region, PGeometries in regionsDict.items():
     count = 0
     geo = PGeometries[-1]
+    
     for i in range(len(PGeometries)):
-        geo = geo.merge(PGeometries[count])
-        count =+1
-        
+        geo = geo.union(PGeometries[count])
+        count +=1
+    
     regionsLayer.add_feature(geo, [region])
 
 
 HMap.add_layer(regionsLayer)
-"""
+
