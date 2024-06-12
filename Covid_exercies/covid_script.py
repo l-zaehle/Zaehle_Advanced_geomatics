@@ -69,3 +69,37 @@ for region, PGeometries in regionsDict.items():
 
 HMap.add_layer(regionsLayer)
 
+
+###-------------
+#Adding the csv starts here
+#-------------------
+
+dataPath = folder + "data\\dpc-covid19-ita-regioni.csv"
+
+with open(dataPath, "r") as file: #read the file'
+    lines = file.readlines()
+
+regionsFeatures = regionsLayer.features()
+#workaround: only one day for now
+date = "2020-02-24T18:00:00"
+
+covidDict = {}
+
+for line in lines[1:]: #skip headers
+    if line.startswith("#") or len(line) == 0:
+        continue
+    line = line.strip().split(",")
+    lat = float(line[4])
+    lon = float(line[5])
+
+    centerPoint = HPoint(lon,lat)
+
+    if date == line[0]:
+        for feature in regionsFeatures:
+            if centerPoint.intersects(feature.geometry):
+                covidDict[feature.attributes[0]] = line[6]
+                
+                
+print(covidDict)
+
+
